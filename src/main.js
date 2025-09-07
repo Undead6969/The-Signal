@@ -282,8 +282,20 @@ function startNewGame() {
 
 function continueGame() {
     console.log('📁 Continuing saved game...');
-    // Load saved game state
-    gameEngine.loadGame();
+
+    // Check if there's a save file
+    if (gameEngine.saveManager.hasSave()) {
+        uiManager.hideMainMenu();
+        gameEngine.loadGame();
+        audioManager.playAmbientSound('facility_ambient');
+    } else {
+        console.log('⚠️ No save data found');
+        uiManager.showNotification('No saved game found. Starting new mission...', 'warning');
+        // Start new game after a short delay
+        setTimeout(() => {
+            startNewGame();
+        }, 2000);
+    }
 }
 
 function showSettings() {

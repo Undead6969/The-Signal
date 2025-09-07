@@ -27,7 +27,7 @@ You are a rescue soldier deployed to investigate a distress signal from Blacksta
 - HTTPS connection (required for Web Audio API)
 - At least 4GB RAM recommended
 
-### Installation & Running
+### Local Development
 
 1. **Clone the repository**
    ```bash
@@ -49,6 +49,24 @@ You are a rescue soldier deployed to investigate a distress signal from Blacksta
    - Navigate to `https://localhost:3000` (HTTPS required)
    - Click to start the game
    - Click again to enable pointer lock for FPS controls
+
+### 🚀 Deploy to Vercel
+
+1. **Install Vercel CLI**
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Deploy**
+   ```bash
+   vercel --prod
+   ```
+
+3. **Access your live game**
+   - Vercel will provide a `.vercel.app` URL
+   - Share with friends: `https://your-project.vercel.app`
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ## 🎯 Gameplay
 

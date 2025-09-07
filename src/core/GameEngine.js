@@ -33,6 +33,7 @@ export class GameEngine {
         this.physicsManager = null;
         this.storyManager = null;
         this.effectManager = null;
+        this.saveManager = new SaveManager();
 
         // Game world
         this.worldBounds = new THREE.Box3(
@@ -349,16 +350,30 @@ export class GameEngine {
         this.isPaused = false;
     }
 
-    loadGame() {
-        // Load game state from save file
+    loadGame(slot = null) {
         console.log('📁 Loading saved game...');
-        // Implementation would load from localStorage or Supabase
-        this.startNewGame();
+
+        const saveData = this.saveManager.loadGame(slot);
+        if (saveData) {
+            // Restore game state
+            this.gameTime = saveData.gameTime || 0;
+            this.player.loadSaveData(saveData.playerState);
+            this.worldManager.loadSaveData(saveData.worldState);
+            this.enemyManager.loadSaveData(saveData.enemyState);
+            this.storyManager.loadSaveData(saveData.storyState);
+
+            this.isPlaying = true;
+            this.isPaused = false;
+            console.log('✅ Game loaded successfully');
+        } else {
+            console.log('⚠️ No save data found, starting new game');
+            this.startNewGame();
+        }
     }
 
-    saveGame() {
-        // Save current game state
+    saveGame(slot = null) {
         console.log('💾 Saving game...');
+
         const saveData = {
             gameTime: this.gameTime,
             playerState: this.player.getSaveData(),
@@ -367,8 +382,14 @@ export class GameEngine {
             storyState: this.storyManager.getSaveData()
         };
 
-        // Save to localStorage
-        localStorage.setItem('theSignal_saveData', JSON.stringify(saveData));
+        const success = this.saveManager.saveGame(saveData, slot);
+        if (success) {
+            console.log('✅ Game saved successfully');
+            this.uiManager.showNotification('Game saved!', 'success');
+        } else {
+            console.log('❌ Failed to save game');
+            this.uiManager.showNotification('Failed to save game', 'error');
+        }
     }
 
     // Getters for external access
@@ -393,4 +414,7 @@ export class GameEngine {
             enemyCount: this.enemyManager.getEnemyCount(),
             madnessLevel: this.player.getMadnessLevel(),
             batteryLevel: this.player.getBatteryLevel(),
-            ammoCount: t
+            ammoCount: this.player.getAmmoCount()
+        };
+    }
+}
