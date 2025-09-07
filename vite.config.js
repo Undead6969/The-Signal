@@ -25,7 +25,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           three: ['three'],
-          vendor: ['cannon-es', 'dat.gui']
+          vendor: ['cannon-es']
         }
       }
     },
@@ -78,8 +78,7 @@ export default defineConfig({
 
   // Optimize dependencies
   optimizeDeps: {
-    include: ['three', 'cannon-es'],
-    exclude: ['@vitejs/plugin-basic-ssl']
+    include: ['three', 'cannon-es']
   },
 
   // Preview server (for production builds)
