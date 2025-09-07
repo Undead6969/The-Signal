@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Signal - Psychological Horror FPS</title>
+    <link rel="icon" type="image/x-icon" href="./assets/favicon/favicon.ico">
     <link rel="stylesheet" href="./src/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 </head>
@@ -85,12 +86,83 @@
         <div class="cutscene-content">
             <div class="cutscene-text"></div>
             <div class="cutscene-image"></div>
+            <div class="cutscene-continue">Click to continue...</div>
         </div>
     </div>
 
     <!-- Inventory System -->
     <div id="inventory" class="hidden">
         <div class="inventory-grid"></div>
+    </div>
+
+    <!-- Load Game Screen -->
+    <div id="load-game" class="screen hidden">
+        <div class="menu-content">
+            <div class="title-section">
+                <h2>LOAD MISSION</h2>
+                <p class="subtitle">Select a save slot to continue</p>
+            </div>
+
+            <div class="save-slots">
+                <div class="save-slot" data-slot="0">
+                    <div class="save-slot-info">
+                        <div class="save-slot-name">QUICK SAVE</div>
+                        <div class="save-slot-meta">
+                            <span class="save-date">No save data</span>
+                            <span class="save-playtime">--:--</span>
+                        </div>
+                    </div>
+                    <div class="save-slot-actions">
+                        <button class="load-btn" data-slot="0">LOAD</button>
+                        <button class="delete-btn" data-slot="0" disabled>DELETE</button>
+                    </div>
+                </div>
+
+                <div class="save-slot" data-slot="1">
+                    <div class="save-slot-info">
+                        <div class="save-slot-name">SLOT 1</div>
+                        <div class="save-slot-meta">
+                            <span class="save-date">No save data</span>
+                            <span class="save-playtime">--:--</span>
+                        </div>
+                    </div>
+                    <div class="save-slot-actions">
+                        <button class="load-btn" data-slot="1">LOAD</button>
+                        <button class="delete-btn" data-slot="1" disabled>DELETE</button>
+                    </div>
+                </div>
+
+                <div class="save-slot" data-slot="2">
+                    <div class="save-slot-info">
+                        <div class="save-slot-name">SLOT 2</div>
+                        <div class="save-slot-meta">
+                            <span class="save-date">No save data</span>
+                            <span class="save-playtime">--:--</span>
+                        </div>
+                    </div>
+                    <div class="save-slot-actions">
+                        <button class="load-btn" data-slot="2">LOAD</button>
+                        <button class="delete-btn" data-slot="2" disabled>DELETE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="menu-options">
+                <button class="menu-button" id="back-to-main-load">BACK TO MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Save Confirmation -->
+    <div id="delete-confirm" class="modal hidden">
+        <div class="modal-content">
+            <h3>DELETE SAVE SLOT?</h3>
+            <p>This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="modal-btn cancel-btn" id="cancel-delete">CANCEL</button>
+                <button class="modal-btn confirm-btn" id="confirm-delete">DELETE</button>
+            </div>
+        </div>
     </div>
 
     <!-- Settings Screen -->

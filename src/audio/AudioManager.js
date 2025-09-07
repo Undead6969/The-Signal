@@ -71,33 +71,10 @@ export class AudioManager {
         console.log('🎵 Loading audio files via main loading manager...');
 
         try {
-            // Since we don't have actual audio files, we'll create placeholder entries
-            // In a real implementation, you would load actual audio files here
-            this.sounds.set('gunshot', { buffer: null, loaded: false });
-            this.sounds.set('reload', { buffer: null, loaded: false });
-            this.sounds.set('footstep', { buffer: null, loaded: false });
-            this.sounds.set('door_open', { buffer: null, loaded: false });
-            this.sounds.set('pickup', { buffer: null, loaded: false });
-            this.sounds.set('enemy_growl', { buffer: null, loaded: false });
-            this.sounds.set('signal_pulse', { buffer: null, loaded: false });
-            this.sounds.set('heartbeat', { buffer: null, loaded: false });
-            this.sounds.set('whispers', { buffer: null, loaded: false });
-            this.sounds.set('static', { buffer: null, loaded: false });
+            // Load all audio assets with proper file paths
+            await this.loadAudioAssets();
 
-            // Music tracks
-            this.musicTracks.set('main_theme', { buffer: null, loaded: false });
-            this.musicTracks.set('facility_ambient', { buffer: null, loaded: false });
-            this.musicTracks.set('combat_theme', { buffer: null, loaded: false });
-            this.musicTracks.set('signal_theme', { buffer: null, loaded: false });
-            this.musicTracks.set('ending_theme', { buffer: null, loaded: false });
-
-            // Ambient sounds
-            this.ambientSounds.set('facility_hum', { buffer: null, loaded: false });
-            this.ambientSounds.set('wind', { buffer: null, loaded: false });
-            this.ambientSounds.set('distant_voices', { buffer: null, loaded: false });
-            this.ambientSounds.set('signal_interference', { buffer: null, loaded: false });
-
-            console.log('✅ Audio files loaded (placeholders)');
+            console.log('✅ Audio files loaded successfully');
 
             // Signal completion to loading manager
             if (loadingManager && loadingManager.onLoad) {
@@ -177,18 +154,40 @@ export class AudioManager {
     }
 
     async loadAudioAssets() {
-        // Sound effects
+        console.log('🎵 Loading audio assets from organized directories...');
+
+        // Sound effects with organized file paths
         const soundEffects = {
+            // Combat sounds
             'gunshot': './assets/audio/sfx/gunshot.wav',
             'reload': './assets/audio/sfx/reload.wav',
-            'footstep': './assets/audio/sfx/footstep.wav',
+
+            // Movement sounds
+            'footstep_concrete': './assets/audio/sfx/footstep_concrete.wav',
+            'footstep_metal': './assets/audio/sfx/footstep_metal.wav',
+            'footstep_snow': './assets/audio/sfx/footstep_snow.wav',
+
+            // Interaction sounds
             'door_open': './assets/audio/sfx/door_open.wav',
+            'door_close': './assets/audio/sfx/door_close.wav',
             'pickup': './assets/audio/sfx/pickup.wav',
+            'keycard_use': './assets/audio/sfx/keycard_use.wav',
+
+            // Enemy sounds
             'enemy_growl': './assets/audio/sfx/enemy_growl.wav',
+            'enemy_attack': './assets/audio/sfx/enemy_attack.wav',
+
+            // Signal/Horror sounds
             'signal_pulse': './assets/audio/sfx/signal_pulse.wav',
             'heartbeat': './assets/audio/sfx/heartbeat.wav',
+            'breathing_heavy': './assets/audio/sfx/breathing_heavy.wav',
             'whispers': './assets/audio/sfx/whispers.wav',
-            'static': './assets/audio/sfx/static.wav'
+            'static': './assets/audio/sfx/static.wav',
+
+            // Environmental sounds
+            'glass_break': './assets/audio/sfx/glass_break.wav',
+            'metal_impact': './assets/audio/sfx/metal_impact.wav',
+            'alarm': './assets/audio/sfx/alarm.wav'
         };
 
         // Music tracks
@@ -197,7 +196,8 @@ export class AudioManager {
             'facility_ambient': './assets/audio/music/facility_ambient.mp3',
             'combat_theme': './assets/audio/music/combat_theme.mp3',
             'signal_theme': './assets/audio/music/signal_theme.mp3',
-            'ending_theme': './assets/audio/music/ending_theme.mp3'
+            'ending_theme': './assets/audio/music/ending_theme.mp3',
+            'tension_build': './assets/audio/music/tension_build.mp3'
         };
 
         // Ambient sounds
@@ -205,29 +205,43 @@ export class AudioManager {
             'facility_hum': './assets/audio/ambient/facility_hum.wav',
             'wind': './assets/audio/ambient/wind.wav',
             'distant_voices': './assets/audio/ambient/distant_voices.wav',
-            'signal_interference': './assets/audio/ambient/signal_interference.wav'
+            'signal_interference': './assets/audio/ambient/signal_interference.wav',
+            'ice_cracking': './assets/audio/ambient/ice_cracking.wav',
+            'snow_storm': './assets/audio/ambient/snow_storm.wav'
         };
 
-        // Load all audio files
-        await Promise.all([
+        // Load all audio files with error handling
+        const loadPromises = [
             this.loadSounds(soundEffects),
             this.loadMusic(musicTracks),
             this.loadAmbient(ambientSounds)
-        ]);
+        ];
+
+        try {
+            await Promise.all(loadPromises);
+            console.log('✅ All audio assets loaded successfully');
+        } catch (error) {
+            console.warn('⚠️ Some audio assets failed to load:', error);
+            console.log('🎵 Continuing with available audio assets...');
+        }
     }
 
     async loadSounds(soundList) {
         for (const [name, url] of Object.entries(soundList)) {
             try {
                 const buffer = await this.loadAudioBuffer(url);
-                this.sounds.set(name, buffer);
+                this.sounds.set(name, { buffer: buffer, loaded: true });
 
                 // Create sound pool for frequently used sounds
-                if (['footstep', 'gunshot', 'enemy_growl'].includes(name)) {
+                if (['footstep_concrete', 'footstep_metal', 'gunshot', 'enemy_growl', 'door_open'].includes(name)) {
                     this.createSoundPool(name, buffer, 5);
                 }
+
+                console.log(`✅ Loaded sound: ${name}`);
             } catch (error) {
-                console.warn(`Failed to load sound: ${name}`, error);
+                console.warn(`⚠️ Sound not found: ${name} (${url})`);
+                // Create placeholder entry for missing sounds
+                this.sounds.set(name, { buffer: null, loaded: false });
             }
         }
     }
@@ -236,9 +250,11 @@ export class AudioManager {
         for (const [name, url] of Object.entries(musicList)) {
             try {
                 const buffer = await this.loadAudioBuffer(url);
-                this.musicTracks.set(name, buffer);
+                this.musicTracks.set(name, { buffer: buffer, loaded: true });
+                console.log(`✅ Loaded music: ${name}`);
             } catch (error) {
-                console.warn(`Failed to load music: ${name}`, error);
+                console.warn(`⚠️ Music not found: ${name} (${url})`);
+                this.musicTracks.set(name, { buffer: null, loaded: false });
             }
         }
     }
@@ -247,9 +263,11 @@ export class AudioManager {
         for (const [name, url] of Object.entries(ambientList)) {
             try {
                 const buffer = await this.loadAudioBuffer(url);
-                this.ambientSounds.set(name, buffer);
+                this.ambientSounds.set(name, { buffer: buffer, loaded: true });
+                console.log(`✅ Loaded ambient: ${name}`);
             } catch (error) {
-                console.warn(`Failed to load ambient: ${name}`, error);
+                console.warn(`⚠️ Ambient sound not found: ${name} (${url})`);
+                this.ambientSounds.set(name, { buffer: null, loaded: false });
             }
         }
     }
@@ -275,11 +293,17 @@ export class AudioManager {
     // Playback methods
     playSound(soundName, options = {}) {
         if (this.fallbackMode || !this.sounds.has(soundName)) {
-            console.log(`🔊 Would play sound: ${soundName}`);
+            console.log(`🔊 Would play sound: ${soundName} (not loaded)`);
             return null;
         }
 
-        const buffer = this.sounds.get(soundName);
+        const soundData = this.sounds.get(soundName);
+        if (!soundData || !soundData.loaded || !soundData.buffer) {
+            console.log(`🔊 Would play sound: ${soundName} (no audio file)`);
+            return null;
+        }
+
+        const buffer = soundData.buffer;
         const source = this.audioContext.createBufferSource();
         const gainNode = this.audioContext.createGain();
 
@@ -343,7 +367,11 @@ export class AudioManager {
         }
 
         // Create new source
-        const buffer = this.sounds.get(soundName);
+        const soundData = this.sounds.get(soundName);
+        if (!soundData || !soundData.loaded || !soundData.buffer) {
+            return null; // Can't pool unloaded sounds
+        }
+        const buffer = soundData.buffer;
         const source = this.audioContext.createBufferSource();
         const gainNode = this.audioContext.createGain();
 
@@ -397,7 +425,13 @@ export class AudioManager {
             return;
         }
 
-        const buffer = this.musicTracks.get(trackName);
+        const musicData = this.musicTracks.get(trackName);
+        if (!musicData || !musicData.loaded || !musicData.buffer) {
+            console.log(`🎵 Would play music: ${trackName} (no audio file)`);
+            return;
+        }
+
+        const buffer = musicData.buffer;
         const source = this.audioContext.createBufferSource();
         const gainNode = this.audioContext.createGain();
 
@@ -444,7 +478,13 @@ export class AudioManager {
             return;
         }
 
-        const buffer = this.ambientSounds.get(soundName);
+        const ambientData = this.ambientSounds.get(soundName);
+        if (!ambientData || !ambientData.loaded || !ambientData.buffer) {
+            console.log(`🌊 Would play ambient: ${soundName} (no audio file)`);
+            return;
+        }
+
+        const buffer = ambientData.buffer;
         const source = this.audioContext.createBufferSource();
         const gainNode = this.audioContext.createGain();
 
@@ -475,6 +515,11 @@ export class AudioManager {
         };
 
         return this.currentAmbient;
+    }
+
+    // Alias method for compatibility
+    playAmbientSound(soundName, options = {}) {
+        return this.playAmbient(soundName, options);
     }
 
     apply3DAudio(source, gainNode, position) {

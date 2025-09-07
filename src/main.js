@@ -4,12 +4,18 @@ import { GameState } from './core/GameState.js';
 import { UIManager } from './ui/UIManager.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { InputManager } from './input/InputManager.js';
+import { TextureManager } from './core/TextureManager.js';
+import { ModelManager } from './core/ModelManager.js';
+import { AssetManifest } from './core/AssetManifest.js';
 
 // Global game instance
 let gameEngine;
 let uiManager;
 let audioManager;
 let inputManager;
+let textureManager;
+let modelManager;
+let assetManifest;
 
 // Game configuration
 const CONFIG = {
@@ -47,8 +53,19 @@ async function init() {
             throw new Error('Game canvas not found');
         }
 
+        // Add click handler for pointer lock
+        CONFIG.canvas.addEventListener('click', () => {
+            if (inputManager && gameEngine && gameEngine.isPlaying) {
+                // Allow pointer lock during gameplay (playing state)
+                inputManager.requestPointerLockOnInteraction();
+            }
+        });
+
         console.log('📱 Initializing UI Manager...');
         uiManager = new UIManager();
+
+        console.log('📋 Initializing Asset Manifest...');
+        assetManifest = new AssetManifest();
 
         console.log('🔊 Initializing Audio Manager...');
         audioManager = new AudioManager(CONFIG.soundVolume);
@@ -59,8 +76,17 @@ async function init() {
         console.log('🎨 Initializing Three.js...');
         await initThreeJS();
 
+        console.log('🖼️ Initializing Texture Manager...');
+        textureManager = new TextureManager();
+
+        console.log('🎭 Initializing Model Manager...');
+        modelManager = new ModelManager();
+
         console.log('⚙️ Initializing Game Engine...');
-        gameEngine = new GameEngine(CONFIG, uiManager, audioManager, inputManager);
+        gameEngine = new GameEngine(CONFIG, uiManager, audioManager, inputManager, textureManager, modelManager);
+
+        // Inject save manager into UI manager
+        uiManager.setSaveManager(gameEngine.saveManager);
 
         console.log('👂 Setting up event listeners...');
         setupEventListeners();
@@ -125,16 +151,21 @@ async function loadAssets() {
     loadingManager.onProgress = (url, loaded, total) => {
         const progress = (loaded / total) * 100;
         uiManager.updateLoadingProgress(progress);
-        console.log(`Loading: ${progress.toFixed(1)}% (${url})`);
+        console.log(`Loading: ${progress.toFixed(1)}% (${loaded}/${total}) - ${url}`);
+
+        // Update asset manifest with loading progress
+        assetManifest.updateAssetStatus('unknown', url, 'loading');
     };
 
     loadingManager.onLoad = () => {
         console.log('🎯 All assets loaded!');
+        console.log('📋 Asset loading summary:', assetManifest.getDebugInfo());
         uiManager.showMainMenu();
     };
 
     loadingManager.onError = (url) => {
         console.error(`❌ Failed to load asset: ${url}`);
+        assetManifest.updateAssetStatus('unknown', url, 'failed', { error: 'Loading failed' });
     };
 
     // Load textures, models, audio files
@@ -354,29 +385,84 @@ function createBloodTexture() {
 
 // Load texture assets
 async function loadTextures(loadingManager) {
-    console.log('🎨 Generating procedural textures...');
+    console.log('🎨 Loading texture assets...');
 
-    // Environment textures - generate procedural textures
-    CONFIG.textures = {};
+    // Configure texture manager with loading manager
+    textureManager.loadingManager = loadingManager;
 
-    // Generate procedural textures instead of loading files
-    const proceduralTextures = [
-        { name: 'concrete', generator: () => createConcreteTexture() },
-        { name: 'metal', generator: () => createMetalTexture() },
-        { name: 'snow', generator: () => createSnowTexture() },
-        { name: 'ice', generator: () => createIceTexture() },
-        { name: 'rust', generator: () => createRustTexture() },
-        { name: 'blood', generator: () => createBloodTexture() },
-    ];
+    try {
+        // Register texture assets with manifest
+        const textureAssets = [
+            // Wall textures
+            'concrete_wall', 'metal_wall', 'rusted_metal', 'facility_panel',
+            // Floor textures
+            'concrete_floor', 'metal_grate', 'snow_covered', 'ice_floor',
+            // Detail textures
+            'blood_stains', 'rust_overlay', 'corrosion', 'warning_signs', 'graffiti',
+            // Environment textures
+            'snow', 'ice_formations', 'facility_details'
+        ];
 
-    proceduralTextures.forEach(({ name, generator }) => {
-        CONFIG.textures[name] = generator();
-        CONFIG.textures[name].wrapS = THREE.RepeatWrapping;
-        CONFIG.textures[name].wrapT = THREE.RepeatWrapping;
-        console.log(`✅ Generated procedural texture: ${name}`);
-    });
+        textureAssets.forEach(name => {
+            assetManifest.registerAsset('textures', name, `./assets/textures/${name}.jpg`);
+        });
 
-    console.log('🎨 Procedural texture generation complete');
+        // Load real texture files if available, fallback to procedural
+        await textureManager.loadTextures();
+
+        // Generate fallback procedural textures for any missing ones
+        const fallbackTextures = [
+            { name: 'concrete', generator: () => createConcreteTexture() },
+            { name: 'metal', generator: () => createMetalTexture() },
+            { name: 'snow', generator: () => createSnowTexture() },
+            { name: 'ice', generator: () => createIceTexture() },
+            { name: 'rust', generator: () => createRustTexture() },
+            { name: 'blood', generator: () => createBloodTexture() },
+        ];
+
+        // Create fallback procedural textures and add to texture manager
+        fallbackTextures.forEach(({ name, generator }) => {
+            if (!textureManager.hasTexture(name)) {
+                const texture = generator();
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                textureManager.textures.set(name, texture);
+                console.log(`📋 Generated fallback texture: ${name}`);
+            }
+        });
+
+        // Store texture manager in CONFIG for backward compatibility
+        CONFIG.textureManager = textureManager;
+        CONFIG.textures = {}; // Keep legacy texture object for compatibility
+
+        // Copy texture manager textures to legacy format
+        for (const [name, texture] of textureManager.textures) {
+            if (texture) {
+                CONFIG.textures[name] = texture;
+            }
+        }
+
+        console.log('✅ Texture loading complete');
+    } catch (error) {
+        console.warn('⚠️ Texture loading failed, using procedural fallbacks:', error);
+        // Generate all procedural textures as fallback
+        CONFIG.textures = {};
+        const proceduralTextures = [
+            { name: 'concrete', generator: () => createConcreteTexture() },
+            { name: 'metal', generator: () => createMetalTexture() },
+            { name: 'snow', generator: () => createSnowTexture() },
+            { name: 'ice', generator: () => createIceTexture() },
+            { name: 'rust', generator: () => createRustTexture() },
+            { name: 'blood', generator: () => createBloodTexture() },
+        ];
+
+        proceduralTextures.forEach(({ name, generator }) => {
+            CONFIG.textures[name] = generator();
+            CONFIG.textures[name].wrapS = THREE.RepeatWrapping;
+            CONFIG.textures[name].wrapT = THREE.RepeatWrapping;
+            console.log(`📋 Generated procedural texture: ${name}`);
+        });
+    }
 
     // Signal completion to loading manager
     if (loadingManager && loadingManager.onLoad) {
@@ -388,16 +474,53 @@ async function loadTextures(loadingManager) {
 async function loadModels(loadingManager) {
     console.log('🎭 Loading 3D models...');
 
-    // For now, we'll create procedural geometry
-    // In a full implementation, you'd load GLTF models here
-    CONFIG.models = {
-        player: createPlayerModel(),
-        enemy: createEnemyModel(),
-        weapon: createWeaponModel(),
-        environment: createEnvironmentModels(),
-    };
+    // Configure model manager with loading manager
+    modelManager.loadingManager = loadingManager;
 
-    console.log('✅ 3D models loaded (procedural geometry)');
+    try {
+        // Register 3D model assets with manifest
+        const characterModels = ['player', 'scientist_infected', 'soldier_corrupted', 'signal_entity'];
+        const weaponModels = ['pistol', 'rifle', 'shotgun'];
+        const environmentModels = ['door_frame', 'computer_terminal', 'research_equipment', 'furniture_desk', 'furniture_chair', 'ventilation_system', 'security_camera'];
+        const propsModels = ['keycard', 'battery', 'document', 'medical_supplies', 'ammo_box', 'radio_transmitter', 'research_log'];
+
+        const allModels = [
+            ...characterModels.map(name => ({ category: 'characters', name })),
+            ...weaponModels.map(name => ({ category: 'weapons', name })),
+            ...environmentModels.map(name => ({ category: 'environment', name })),
+            ...propsModels.map(name => ({ category: 'props', name }))
+        ];
+
+        allModels.forEach(({ category, name }) => {
+            assetManifest.registerAsset('models', name, `./assets/models/${category}/${name}.glb`);
+        });
+
+        // Load real 3D models if available, fallback to procedural
+        await modelManager.loadModels();
+
+        // Store model manager in CONFIG for backward compatibility
+        CONFIG.modelManager = modelManager;
+        CONFIG.models = {}; // Keep legacy models object for compatibility
+
+        // Copy model manager models to legacy format
+        for (const [name, modelData] of modelManager.models) {
+            if (modelData) {
+                CONFIG.models[name] = modelData.scene.clone();
+            }
+        }
+
+        console.log('✅ 3D model loading complete');
+    } catch (error) {
+        console.warn('⚠️ 3D model loading failed, using procedural fallbacks:', error);
+        // Generate procedural models as fallback
+        CONFIG.models = {
+            player: createPlayerModel(),
+            enemy: createEnemyModel(),
+            weapon: createWeaponModel(),
+            environment: createEnvironmentModels(),
+        };
+        console.log('📦 Using procedural model fallbacks');
+    }
 }
 
 // Create procedural models (fallback when GLTF models aren't available)
@@ -438,24 +561,25 @@ function createEnvironmentModels() {
 
 // Setup event listeners
 function setupEventListeners() {
-    // Menu buttons
-    document.getElementById('new-game-btn').addEventListener('click', startNewGame);
-    document.getElementById('continue-btn').addEventListener('click', continueGame);
-    document.getElementById('settings-btn').addEventListener('click', showSettings);
-    document.getElementById('credits-btn').addEventListener('click', showCredits);
-
-    // Settings
-    document.getElementById('save-settings').addEventListener('click', saveSettings);
-    document.getElementById('back-to-menu').addEventListener('click', returnToMainMenu);
-
-    // Pause menu
-    document.getElementById('resume-btn').addEventListener('click', resumeGame);
-    document.getElementById('restart-btn').addEventListener('click', restartGame);
-    document.getElementById('main-menu-btn').addEventListener('click', returnToMainMenu);
-
-    // Game over
-    document.getElementById('retry-btn').addEventListener('click', retryGame);
-    document.getElementById('main-menu-end-btn').addEventListener('click', returnToMainMenu);
+    // UI Manager event handlers
+    uiManager.addEventListener('newGame', () => startNewGame());
+    uiManager.addEventListener('showLoadGame', () => uiManager.showLoadGame());
+    uiManager.addEventListener('showMainMenu', () => uiManager.showMainMenu());
+    uiManager.addEventListener('loadGame', (event) => loadGame(event.detail.slot));
+    uiManager.addEventListener('confirmDelete', (event) => uiManager.showDeleteConfirm(event.detail.slot));
+    uiManager.addEventListener('cancelDelete', () => uiManager.hideDeleteConfirm());
+    uiManager.addEventListener('deleteSave', () => deleteSaveSlot());
+    uiManager.addEventListener('showSettings', () => showSettings());
+    uiManager.addEventListener('showCredits', () => showCredits());
+    uiManager.addEventListener('saveSettings', () => saveSettings());
+    uiManager.addEventListener('pauseGame', () => {
+        gameEngine.pause();
+        uiManager.showPauseMenu();
+    });
+    uiManager.addEventListener('resumeGame', () => resumeGame());
+    uiManager.addEventListener('restartGame', () => restartGame());
+    uiManager.addEventListener('returnToMainMenu', () => returnToMainMenu());
+    uiManager.addEventListener('retryGame', () => retryGame());
 
     // Keyboard shortcuts
     document.addEventListener('keydown', handleKeyPress);
@@ -471,20 +595,33 @@ function startNewGame() {
 
 function continueGame() {
     console.log('📁 Continuing saved game...');
+    uiManager.showLoadGame();
+}
 
-    // Check if there's a save file
-    if (gameEngine.saveManager.hasSave()) {
-        uiManager.hideMainMenu();
-        gameEngine.loadGame();
+function loadGame(slot) {
+    console.log(`📁 Loading game from slot ${slot}...`);
+
+    if (gameEngine.saveManager.hasSave(slot)) {
+        uiManager.hideLoadGame();
+        gameEngine.loadGame(slot);
         audioManager.playAmbientSound('facility_ambient');
     } else {
-        console.log('⚠️ No save data found');
-        uiManager.showNotification('No saved game found. Starting new mission...', 'warning');
-        // Start new game after a short delay
-        setTimeout(() => {
-            startNewGame();
-        }, 2000);
+        console.log(`⚠️ No save data found in slot ${slot}`);
+        uiManager.showNotification(`No save data found in slot ${slot}`, 'warning');
     }
+}
+
+function deleteSaveSlot() {
+    const slot = uiManager.pendingDeleteSlot;
+    if (slot !== null && gameEngine.saveManager.deleteSave(slot)) {
+        console.log(`🗑️ Deleted save slot ${slot}`);
+        uiManager.showNotification(`Save slot ${slot} deleted`, 'success');
+        uiManager.updateSaveSlots();
+    } else {
+        console.log(`❌ Failed to delete save slot ${slot}`);
+        uiManager.showNotification('Failed to delete save', 'error');
+    }
+    uiManager.hideDeleteConfirm();
 }
 
 function showSettings() {
@@ -536,12 +673,43 @@ function retryGame() {
 function handleKeyPress(event) {
     switch (event.code) {
         case 'Escape':
-            if (gameEngine.isPlaying && !gameEngine.isPaused) {
+            event.preventDefault();
+
+            // If we're in a cutscene, ignore ESC
+            if (uiManager.currentScreen === 'cutscene') {
+                return;
+            }
+
+            // If we're in game over screen, return to main menu
+            if (uiManager.currentScreen === 'gameOver') {
+                returnToMainMenu();
+                return;
+            }
+
+            // If we're in settings, return to main menu
+            if (uiManager.currentScreen === 'settings') {
+                uiManager.showMainMenu();
+                return;
+            }
+
+            // If we're in pause menu, resume game
+            if (uiManager.currentScreen === 'pause') {
+                resumeGame();
+                return;
+            }
+
+            // If we're playing (gameHUD or in-game), pause the game
+            if ((uiManager.currentScreen === 'gameHUD' || uiManager.currentScreen === 'game') && gameEngine.isPlaying && !gameEngine.isPaused) {
                 gameEngine.pause();
                 uiManager.showPauseMenu();
-            } else if (gameEngine.isPaused) {
-                resumeGame();
+                return;
             }
+
+            // If game is not playing but we're in main menu, do nothing
+            if (uiManager.currentScreen === 'mainMenu') {
+                return;
+            }
+
             break;
         case 'KeyP':
             if (gameEngine.isPlaying) {
@@ -626,6 +794,9 @@ window.CONFIG = CONFIG;
 window.gameEngine = () => gameEngine;
 window.uiManager = () => uiManager;
 window.audioManager = () => audioManager;
+window.textureManager = () => textureManager;
+window.modelManager = () => modelManager;
+window.assetManifest = () => assetManifest;
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {

@@ -8,7 +8,7 @@ import { EffectManager } from './EffectManager.js';
 import { SaveManager } from './SaveManager.js';
 
 export class GameEngine {
-    constructor(config, uiManager, audioManager, inputManager) {
+    constructor(config, uiManager, audioManager, inputManager, textureManager = null, modelManager = null) {
         this.config = config;
         this.scene = config.scene;
         this.camera = config.camera;
@@ -19,6 +19,8 @@ export class GameEngine {
         this.uiManager = uiManager;
         this.audioManager = audioManager;
         this.inputManager = inputManager;
+        this.textureManager = textureManager;
+        this.modelManager = modelManager;
 
         // Game state
         this.isPlaying = false;
@@ -54,11 +56,14 @@ export class GameEngine {
 
         // Initialize core systems
         this.physicsManager = new PhysicsManager();
-        this.worldManager = new WorldManager(this.scene, this.config);
+        this.worldManager = new WorldManager(this.scene, this.config, this.textureManager);
         this.player = new Player(this.camera, this.config);
         this.enemyManager = new EnemyManager(this.scene, this.physicsManager);
         this.storyManager = new StoryManager(this);
         this.effectManager = new EffectManager(this.scene, this.camera);
+
+        // Give UIManager reference to gameEngine
+        this.uiManager.setGameEngine(this);
 
         // Setup initial world
         await this.worldManager.generateFacility();

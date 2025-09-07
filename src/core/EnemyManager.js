@@ -757,6 +757,32 @@ export class EnemyManager {
         });
     }
 
+    // Reset for new game
+    reset() {
+        console.log('🔄 Resetting Enemy Manager...');
+
+        // Remove all active enemies
+        this.activeEnemies.forEach(enemy => {
+            this.scene.remove(enemy.mesh);
+            if (enemy.healthBar) {
+                this.scene.remove(enemy.healthBar);
+            }
+        });
+
+        // Clear all collections
+        this.activeEnemies = [];
+        this.inactiveEnemies = [];
+        this.enemies = [];
+
+        // Clear sound events
+        this.soundEvents = [];
+
+        // Recreate enemy pool
+        this.createEnemyPool(15);
+
+        console.log('✅ Enemy Manager reset');
+    }
+
     // Cleanup
     cleanup() {
         // Remove all enemies from scene

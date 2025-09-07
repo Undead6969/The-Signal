@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 
 export class WorldManager {
-    constructor(scene, config) {
+    constructor(scene, config, textureManager = null) {
         this.scene = scene;
         this.config = config;
+        this.textureManager = textureManager;
 
         // World state
         this.rooms = [];
@@ -28,7 +29,7 @@ export class WorldManager {
             glass: null
         };
 
-        // Textures
+        // Legacy texture support (for backward compatibility)
         this.textures = config.textures || {};
 
         this.init();
@@ -47,35 +48,73 @@ export class WorldManager {
     }
 
     createMaterials() {
-        // Wall material
-        this.materials.wall = new THREE.MeshLambertMaterial({
-            color: 0x666666,
-            map: this.textures.concrete || null
-        });
+        console.log('🎨 Creating enhanced materials...');
 
-        // Floor material
-        this.materials.floor = new THREE.MeshLambertMaterial({
-            color: 0x333333,
-            map: this.textures.concrete || null
-        });
+        // Wall materials with enhanced textures
+        if (this.textureManager) {
+            // Use enhanced texture system
+            this.materials.wall = this.textureManager.createNormalMaterial(
+                'concrete_wall',
+                'concrete_wall_normal',
+                { color: 0x666666 }
+            );
 
-        // Ceiling material
+            this.materials.floor = this.textureManager.createNormalMaterial(
+                'concrete_floor',
+                'concrete_floor_normal',
+                { color: 0x333333 }
+            );
+
+            this.materials.metal = this.textureManager.createMaterial(
+                'metal_wall',
+                { color: 0x888888 }
+            );
+
+            // Try to load detailed wall variations
+            if (this.textureManager.hasTexture('rusted_metal')) {
+                this.materials.rustedWall = this.textureManager.createMaterial(
+                    'rusted_metal',
+                    { color: 0x666666 }
+                );
+            }
+
+            if (this.textureManager.hasTexture('facility_panel')) {
+                this.materials.facilityWall = this.textureManager.createMaterial(
+                    'facility_panel',
+                    { color: 0x777777 }
+                );
+            }
+
+            console.log('✅ Enhanced wall materials created');
+        } else {
+            // Fallback to legacy texture system
+            this.materials.wall = new THREE.MeshLambertMaterial({
+                color: 0x666666,
+                map: this.textures.concrete || null
+            });
+
+            this.materials.floor = new THREE.MeshLambertMaterial({
+                color: 0x333333,
+                map: this.textures.concrete || null
+            });
+
+            this.materials.metal = new THREE.MeshLambertMaterial({
+                color: 0x888888,
+                map: this.textures.metal || null
+            });
+
+            console.log('📋 Using legacy texture system');
+        }
+
+        // Standard materials (not affected by texture system)
         this.materials.ceiling = new THREE.MeshLambertMaterial({
             color: 0x444444
         });
 
-        // Door material
         this.materials.door = new THREE.MeshLambertMaterial({
             color: 0x444444
         });
 
-        // Metal material
-        this.materials.metal = new THREE.MeshLambertMaterial({
-            color: 0x888888,
-            map: this.textures.metal || null
-        });
-
-        // Glass material
         this.materials.glass = new THREE.MeshLambertMaterial({
             color: 0x87ceeb,
             transparent: true,
@@ -83,7 +122,7 @@ export class WorldManager {
             side: THREE.DoubleSide
         });
 
-        // Set texture repeats
+        // Set texture repeats for legacy textures
         Object.values(this.textures).forEach(texture => {
             if (texture) {
                 texture.wrapS = THREE.RepeatWrapping;
@@ -229,10 +268,25 @@ export class WorldManager {
         // Create frozen exterior with snow and ice
         const exteriorSize = this.roomSize * 6;
         const exteriorGeometry = new THREE.PlaneGeometry(exteriorSize, exteriorSize);
-        const exteriorMaterial = new THREE.MeshLambertMaterial({
-            color: 0xe6f3ff,
-            map: this.textures.snow || null
-        });
+
+        let exteriorMaterial;
+
+        if (this.textureManager && this.textureManager.hasTexture('snow')) {
+            // Use enhanced snow texture
+            exteriorMaterial = this.textureManager.createNormalMaterial(
+                'snow',
+                'snow_normal',
+                { color: 0xe6f3ff }
+            );
+            console.log('❄️ Enhanced snow texture applied to exterior');
+        } else {
+            // Fallback to basic snow texture or color
+            exteriorMaterial = new THREE.MeshLambertMaterial({
+                color: 0xe6f3ff,
+                map: this.textures.snow || null
+            });
+            console.log('🌨️ Basic snow texture applied to exterior');
+        }
 
         const exterior = new THREE.Mesh(exteriorGeometry, exteriorMaterial);
         exterior.rotation.x = -Math.PI / 2;

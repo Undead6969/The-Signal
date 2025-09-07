@@ -71,6 +71,10 @@ export class InputManager {
 
         // Pointer lock state
         this.pointerLocked = false;
+        this.pointerLockRequested = false;
+
+        // Ensure cursor is visible by default
+        document.body.style.cursor = 'default';
 
         // Event handlers bound to this instance
         this.boundHandlers = {
@@ -113,7 +117,7 @@ export class InputManager {
         document.addEventListener('mousedown', this.boundHandlers.mousedown);
         document.addEventListener('mouseup', this.boundHandlers.mouseup);
         document.addEventListener('mousemove', this.boundHandlers.mousemove);
-        document.addEventListener('wheel', this.boundHandlers.wheel);
+        document.addEventListener('wheel', this.boundHandlers.wheel, { passive: false });
 
         // Pointer lock events
         document.addEventListener('pointerlockchange', this.boundHandlers.pointerlockchange);
@@ -203,17 +207,67 @@ export class InputManager {
         this.pointerLocked = (document.pointerLockElement === document.body);
         console.log(`🔒 Pointer lock: ${this.pointerLocked ? 'enabled' : 'disabled'}`);
 
-        // Update cursor visibility based on pointer lock state
-        if (this.pointerLocked) {
+        // Reset the requested flag when we get a response
+        this.pointerLockRequested = false;
+
+        // Update cursor visibility based on pointer lock state and current UI
+        this.updateCursorVisibility();
+    }
+
+    updateCursorVisibility() {
+        // Only hide cursor during actual gameplay with pointer lock
+        // Keep cursor visible in menus and UI screens
+        if (this.pointerLocked && this.isInGameplay()) {
             document.body.style.cursor = 'none';
         } else {
             document.body.style.cursor = 'default';
         }
     }
 
-    handlePointerLockError() {
-        console.error('❌ Pointer lock failed');
+    forceCursorVisible() {
+        // Force cursor to be visible (for menus)
+        document.body.style.cursor = 'default';
+    }
+
+    isInGameplay() {
+        // Check if we're in actual gameplay (not menus)
+        // Keep cursor visible in all menu screens
+        if (!window.gameEngine) return false;
+
+        // If not playing, we're in menus
+        if (!window.gameEngine.isPlaying) return false;
+
+        // If paused, we're in pause menu
+        if (window.gameEngine.isPaused) return false;
+
+        // If in cutscene, we're not in active gameplay
+        if (window.uiManager && window.uiManager.currentScreen === 'cutscene') return false;
+
+        // We're in active gameplay
+        return true;
+    }
+
+    handlePointerLockError(event) {
+        console.error('❌ Pointer lock failed:', event);
+
+        // Reset states on error
         this.pointerLocked = false;
+        this.pointerLockRequested = false;
+
+        // Show user-friendly message
+        if (event && event.message) {
+            console.warn('💡 Pointer lock error:', event.message);
+        } else {
+            console.warn('💡 Pointer lock may require user interaction or browser permissions');
+        }
+
+        // Try to inform the user
+        this.showPointerLockHelp();
+    }
+
+    showPointerLockHelp() {
+        // This could show a UI notification or tooltip
+        console.log('💡 Tip: Click on the game area to enable mouse look');
     }
 
     handleGamepadConnected(event) {
@@ -447,27 +501,117 @@ export class InputManager {
         console.log(`🔧 Updated key binding: ${action} -> ${keys}`);
     }
 
+    // Check for recent user gesture (required for pointer lock)
+    hasUserGesture() {
+        // Modern browsers require user gesture for pointer lock
+        // This is a simple check - in practice, you'd track actual user interactions
+        return true; // For now, assume we have permission
+    }
+
+    // Request pointer lock on user interaction (call this from click handlers)
+    requestPointerLockOnInteraction() {
+        // This method should be called from user interaction events
+        // It bypasses the user gesture check since we're already in a user event
+        if (this.pointerLocked || this.pointerLockRequested) {
+            return;
+        }
+
+        this.pointerLockRequested = true;
+
+        try {
+            const targetElement = document.body || document.documentElement;
+
+            if (targetElement.requestPointerLock) {
+                targetElement.requestPointerLock().then(() => {
+                    console.log('🔒 Pointer lock granted via user interaction');
+                }).catch(error => {
+                    console.warn('⚠️ Pointer lock request rejected:', error);
+                    this.pointerLockRequested = false;
+                });
+            } else {
+                console.warn('⚠️ requestPointerLock not available');
+                this.pointerLockRequested = false;
+            }
+        } catch (error) {
+            console.warn('⚠️ Pointer lock request failed:', error);
+            this.pointerLockRequested = false;
+        }
+
+        // Reset the requested flag after a delay
+        setTimeout(() => {
+            this.pointerLockRequested = false;
+        }, 200);
+    }
+
     // Pointer lock management
     requestPointerLock() {
-        if (!this.pointerLocked) {
-            document.body.requestPointerLock();
+        // Prevent multiple rapid requests
+        if (this.pointerLocked || this.pointerLockRequested) {
+            return;
         }
+
+        // Check if document is ready and pointer lock is supported
+        if (!document || !document.body || !document.body.requestPointerLock) {
+            console.warn('⚠️ Pointer lock not supported in this environment');
+            return;
+        }
+
+        // Check if we need a user gesture
+        if (!this.hasUserGesture()) {
+            console.log('ℹ️ Pointer lock requires user interaction, will request on next user input');
+            return;
+        }
+
+        this.pointerLockRequested = true;
+
+        try {
+            // Try requesting on document.body first, fallback to document.documentElement
+            const targetElement = document.body || document.documentElement;
+
+            if (targetElement.requestPointerLock) {
+                targetElement.requestPointerLock().catch(error => {
+                    console.warn('⚠️ Pointer lock request rejected:', error);
+                    this.pointerLockRequested = false;
+                });
+            } else {
+                console.warn('⚠️ requestPointerLock not available on target element');
+                this.pointerLockRequested = false;
+            }
+        } catch (error) {
+            console.warn('⚠️ Pointer lock request failed:', error);
+            this.pointerLockRequested = false;
+        }
+
+        // Reset the requested flag after a short delay
+        setTimeout(() => {
+            this.pointerLockRequested = false;
+        }, 200);
     }
 
     exitPointerLock() {
         if (this.pointerLocked) {
             document.exitPointerLock();
         }
+        // Ensure cursor is visible after exiting pointer lock
+        document.body.style.cursor = 'default';
     }
 
     // Handle pause/resume for pointer lock
     onPause() {
         this.exitPointerLock();
+        // Update cursor visibility after exiting pointer lock
+        this.updateCursorVisibility();
     }
 
     onResume() {
-        // Don't automatically request pointer lock on resume
-        // Let the user click to re-enable it
+        // Request pointer lock when resuming
+        // Use a longer delay to ensure the DOM is ready
+        setTimeout(() => {
+            if (!this.pointerLocked && !this.pointerLockRequested) {
+                console.log('🔒 Requesting pointer lock on resume...');
+                this.requestPointerLock();
+            }
+        }, 300); // Increased delay for stability
     }
 
     // Vibration (for gamepad feedback)

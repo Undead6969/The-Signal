@@ -1,5 +1,6 @@
-export class UIManager {
+export class UIManager extends EventTarget {
     constructor() {
+        super();
         this.currentScreen = 'loading';
         this.isInitialized = false;
 
@@ -27,9 +28,24 @@ export class UIManager {
                 interactionPrompt: document.querySelector('.interaction-prompt'),
                 madnessMeter: document.querySelector('.madness-fill')
             },
+            loadGame: {
+                screen: document.getElementById('load-game'),
+                backBtn: document.getElementById('back-to-main-load'),
+                saveSlots: [
+                    document.querySelector('[data-slot="0"]'),
+                    document.querySelector('[data-slot="1"]'),
+                    document.querySelector('[data-slot="2"]')
+                ]
+            },
+            deleteConfirm: {
+                screen: document.getElementById('delete-confirm'),
+                cancelBtn: document.getElementById('cancel-delete'),
+                confirmBtn: document.getElementById('confirm-delete')
+            },
             settings: {
-                screen: document.getElementById('settings-panel'),
+                screen: document.getElementById('settings'),
                 saveBtn: document.getElementById('save-settings'),
+                backBtn: document.getElementById('back-to-menu'),
                 mouseSensitivity: document.getElementById('mouse-sensitivity'),
                 soundVolume: document.getElementById('sound-volume'),
                 graphicsQuality: document.getElementById('graphics-quality')
@@ -50,7 +66,8 @@ export class UIManager {
             cutscene: {
                 screen: document.getElementById('cutscene-overlay'),
                 text: document.querySelector('.cutscene-text'),
-                image: document.querySelector('.cutscene-image')
+                image: document.querySelector('.cutscene-image'),
+                continue: document.querySelector('.cutscene-continue')
             },
             inventory: {
                 screen: document.getElementById('inventory'),
@@ -105,12 +122,27 @@ export class UIManager {
     setupEventListeners() {
         // Menu navigation
         this.elements.mainMenu.newGameBtn.addEventListener('click', () => this.emit('newGame'));
-        this.elements.mainMenu.continueBtn.addEventListener('click', () => this.emit('continueGame'));
+        this.elements.mainMenu.continueBtn.addEventListener('click', () => this.emit('showLoadGame'));
         this.elements.mainMenu.settingsBtn.addEventListener('click', () => this.emit('showSettings'));
         this.elements.mainMenu.creditsBtn.addEventListener('click', () => this.emit('showCredits'));
 
+        // Load game screen
+        this.elements.loadGame.backBtn.addEventListener('click', () => this.emit('showMainMenu'));
+        this.elements.loadGame.saveSlots.forEach((slot, index) => {
+            const loadBtn = slot.querySelector('.load-btn');
+            const deleteBtn = slot.querySelector('.delete-btn');
+
+            loadBtn.addEventListener('click', () => this.emit('loadGame', { slot: index }));
+            deleteBtn.addEventListener('click', () => this.emit('confirmDelete', { slot: index }));
+        });
+
+        // Delete confirmation
+        this.elements.deleteConfirm.cancelBtn.addEventListener('click', () => this.emit('cancelDelete'));
+        this.elements.deleteConfirm.confirmBtn.addEventListener('click', () => this.emit('deleteSave'));
+
         // Settings
         this.elements.settings.saveBtn.addEventListener('click', () => this.emit('saveSettings'));
+        this.elements.settings.backBtn.addEventListener('click', () => this.emit('showMainMenu'));
 
         // Pause menu
         this.elements.pauseMenu.resumeBtn.addEventListener('click', () => this.emit('resumeGame'));
@@ -121,17 +153,7 @@ export class UIManager {
         this.elements.gameOver.retryBtn.addEventListener('click', () => this.emit('retryGame'));
         this.elements.gameOver.mainMenuEndBtn.addEventListener('click', () => this.emit('returnToMainMenu'));
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (event) => {
-            if (event.code === 'Escape') {
-                event.preventDefault();
-                if (this.currentScreen === 'game' || this.currentScreen === 'gameHUD') {
-                    this.emit('pauseGame');
-                } else if (this.currentScreen === 'pause') {
-                    this.emit('resumeGame');
-                }
-            }
-        });
+        // Keyboard shortcuts - ESC is handled in main.js for better game state management
     }
 
     // Screen management
@@ -150,6 +172,24 @@ export class UIManager {
         }
 
         console.log(`📺 Switched to screen: ${screenName}`);
+
+        // Update cursor visibility based on new screen
+        this.updateCursorForScreen(screenName);
+    }
+
+    updateCursorForScreen(screenName) {
+        // Update cursor visibility when screen changes
+        const isMenuScreen = ['mainMenu', 'settings', 'pause', 'gameOver', 'loadGame'].includes(screenName);
+
+        if (window.inputManager) {
+            if (isMenuScreen && window.inputManager.forceCursorVisible) {
+                // Force cursor visible in menu screens
+                window.inputManager.forceCursorVisible();
+            } else if (window.inputManager.updateCursorVisibility) {
+                // Update cursor visibility for game screens
+                window.inputManager.updateCursorVisibility();
+            }
+        }
     }
 
     showLoadingScreen() {
@@ -162,6 +202,71 @@ export class UIManager {
 
     showGameHUD() {
         this.showScreen('gameHUD');
+    }
+
+    showLoadGame() {
+        this.showScreen('loadGame');
+        this.updateSaveSlots();
+    }
+
+    showDeleteConfirm(slotToDelete) {
+        this.pendingDeleteSlot = slotToDelete;
+        this.elements.deleteConfirm.screen.classList.remove('hidden');
+    }
+
+    hideDeleteConfirm() {
+        this.elements.deleteConfirm.screen.classList.add('hidden');
+        this.pendingDeleteSlot = null;
+    }
+
+    updateSaveSlots() {
+        const saveSlots = this.getSaveManager().listSaveSlots();
+
+        saveSlots.forEach((slotInfo, index) => {
+            const slotElement = this.elements.loadGame.saveSlots[index];
+            const loadBtn = slotElement.querySelector('.load-btn');
+            const deleteBtn = slotElement.querySelector('.delete-btn');
+            const dateElement = slotElement.querySelector('.save-date');
+            const playtimeElement = slotElement.querySelector('.save-playtime');
+
+            if (slotInfo.exists && slotInfo.metadata) {
+                // Enable buttons and show metadata
+                loadBtn.disabled = false;
+                deleteBtn.disabled = false;
+                dateElement.textContent = slotInfo.metadata.formattedDate;
+                playtimeElement.textContent = this.formatPlaytime(slotInfo.metadata.playTime);
+            } else {
+                // Disable buttons and show empty state
+                loadBtn.disabled = true;
+                deleteBtn.disabled = true;
+                dateElement.textContent = 'No save data';
+                playtimeElement.textContent = '--:--';
+            }
+        });
+    }
+
+    formatPlaytime(seconds) {
+        const hours = Math.floor(seconds / 3600);
+        const minutes = Math.floor((seconds % 3600) / 60);
+
+        if (hours > 0) {
+            return `${hours}:${minutes.toString().padStart(2, '0')}`;
+        } else {
+            return `${minutes}:00`;
+        }
+    }
+
+    getSaveManager() {
+        // This will be injected by the main game engine
+        return this.saveManager;
+    }
+
+    setSaveManager(saveManager) {
+        this.saveManager = saveManager;
+    }
+
+    setGameEngine(gameEngine) {
+        this.gameEngine = gameEngine;
     }
 
     showSettings() {
@@ -184,6 +289,16 @@ export class UIManager {
     showCutscene(content) {
         this.updateCutscene(content);
         this.showScreen('cutscene');
+
+        // Allow user to click to dismiss cutscene
+        const cutsceneElement = this.elements.cutscene.screen;
+        const dismissCutscene = () => {
+            this.hideCutscene();
+            this.showGameHUD(); // Show game HUD after cutscene
+            this.gameEngine?.resume();
+            cutsceneElement.removeEventListener('click', dismissCutscene);
+        };
+        cutsceneElement.addEventListener('click', dismissCutscene);
     }
 
     showInventory() {
@@ -447,18 +562,10 @@ export class UIManager {
 
     // Event system
     emit(eventType, data = null) {
-        const event = new CustomEvent('uiEvent', {
-            detail: { type: eventType, data }
+        const event = new CustomEvent(eventType, {
+            detail: data
         });
-        document.dispatchEvent(event);
-    }
-
-    on(eventType, callback) {
-        document.addEventListener('uiEvent', (event) => {
-            if (event.detail.type === eventType) {
-                callback(event.detail.data);
-            }
-        });
+        this.dispatchEvent(event);
     }
 
     // Utility methods

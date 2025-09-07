@@ -301,5 +301,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Remember**: In the silence between transmissions, something is listening. Don't let it hear you.
 
-*Made by Undead*
+*Made by Undead with Grok*
 # The-Signal

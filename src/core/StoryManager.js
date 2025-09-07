@@ -214,6 +214,11 @@ export class StoryManager {
         });
     }
 
+    // Start the story from the beginning
+    startStory() {
+        this.startAct(0);
+    }
+
     startAct(actIndex) {
         if (actIndex >= this.storyData.acts.length) {
             this.endGame();
@@ -515,6 +520,7 @@ export class StoryManager {
         // Resume after cutscene (would be handled by UI timing)
         setTimeout(() => {
             this.gameEngine.uiManager.hideCutscene();
+            this.gameEngine.uiManager.showGameHUD(); // Show game HUD after cutscene
             this.gameEngine.resume();
         }, 5000); // 5 second cutscene
     }
@@ -598,6 +604,11 @@ export class StoryManager {
         this.gameEngine.uiManager.updateHUD({
             objective: objectiveText || 'Explore the facility'
         });
+    }
+
+    isStoryComplete() {
+        // Check if the story has reached its completion conditions
+        return this.flags.transmitterFound && this.finalChoiceMade;
     }
 
     // Save/Load
