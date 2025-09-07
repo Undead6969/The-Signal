@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Signal - Psychological Horror FPS</title>
+    <link rel="stylesheet" href="./src/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="screen">
+        <div class="loading-content">
+            <div class="signal-icon">📡</div>
+            <h1>THE SIGNAL</h1>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <p class="loading-text">INITIALIZING NEURAL LINK...</p>
+            <div class="loading-dots">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="screen hidden">
+        <div class="menu-content">
+            <div class="title-section">
+                <h1>THE SIGNAL</h1>
+                <p class="subtitle">A Psychological Horror Experience</p>
+            </div>
+
+            <div class="menu-options">
+                <button class="menu-button" id="new-game-btn">NEW MISSION</button>
+                <button class="menu-button" id="continue-btn">CONTINUE</button>
+                <button class="menu-button" id="settings-btn">SETTINGS</button>
+                <button class="menu-button" id="credits-btn">CREDITS</button>
+            </div>
+
+            <div class="distress-signal">
+                <div class="signal-wave"></div>
+                <p class="signal-text">DISTRESS SIGNAL DETECTED</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game HUD -->
+    <div id="game-hud" class="hidden">
+        <div class="hud-top">
+            <div class="ammo-counter">
+                <span class="ammo-current">30</span>/<span class="ammo-max">30</span>
+            </div>
+            <div class="health-bar">
+                <div class="health-fill"></div>
+            </div>
+            <div class="battery-indicator">
+                <span class="battery-level">100%</span>
+            </div>
+        </div>
+
+        <div class="hud-center">
+            <div class="crosshair">
+                <div class="crosshair-dot"></div>
+                <div class="crosshair-lines"></div>
+            </div>
+            <div class="madness-meter">
+                <div class="madness-fill"></div>
+            </div>
+        </div>
+
+        <div class="hud-bottom">
+            <div class="objective-text">Investigate the distress signal</div>
+            <div class="interaction-prompt"></div>
+        </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <!-- Cutscene Overlay -->
+    <div id="cutscene-overlay" class="hidden">
+        <div class="cutscene-content">
+            <div class="cutscene-text"></div>
+            <div class="cutscene-image"></div>
+        </div>
+    </div>
+
+    <!-- Inventory System -->
+    <div id="inventory" class="hidden">
+        <div class="inventory-grid"></div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settings-panel" class="hidden">
+        <div class="settings-content">
+            <h2>SETTINGS</h2>
+            <div class="setting-group">
+                <label>Mouse Sensitivity</label>
+                <input type="range" id="mouse-sensitivity" min="0.1" max="2" step="0.1" value="1">
+            </div>
+            <div class="setting-group">
+                <label>Sound Volume</label>
+                <input type="range" id="sound-volume" min="0" max="1" step="0.1" value="0.8">
+            </div>
+            <div class="setting-group">
+                <label>Graphics Quality</label>
+                <select id="graphics-quality">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                </select>
+            </div>
+            <button class="menu-button" id="save-settings">SAVE SETTINGS</button>
+        </div>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pause-menu" class="hidden">
+        <div class="menu-content">
+            <h2>MISSION PAUSED</h2>
+            <button class="menu-button" id="resume-btn">RESUME</button>
+            <button class="menu-button" id="restart-btn">RESTART MISSION</button>
+            <button class="menu-button" id="main-menu-btn">MAIN MENU</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over" class="hidden">
+        <div class="game-over-content">
+            <h2>GAME OVER</h2>
+            <div class="ending-stats"></div>
+            <button class="menu-button" id="retry-btn">RETRY</button>
+            <button class="menu-button" id="main-menu-end-btn">MAIN MENU</button>
+        </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>

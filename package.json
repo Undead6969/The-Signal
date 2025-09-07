@@ -1,0 +1,23 @@
+{
+  "name": "the-signal",
+  "version": "1.0.0",
+  "description": "A psychological horror FPS game set in an Arctic research facility",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "dev": "vite --host"
+  },
+  "dependencies": {
+    "three": "^0.158.0",
+    "cannon-es": "^0.20.0",
+    "dat.gui": "^0.7.9",
+    "@supabase/supabase-js": "^2.38.4"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-basic-ssl": "^1.1.0",
+    "vite-plugin-glsl": "^1.2.0"
+  }
+}

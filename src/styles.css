@@ -1,0 +1,458 @@
+/* The Signal - Psychological Horror FPS Theme */
+:root {
+    --primary-color: #00ffff;
+    --secondary-color: #ff00ff;
+    --accent-color: #ffff00;
+    --danger-color: #ff0000;
+    --background-dark: #0a0a0a;
+    --background-darker: #050505;
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --text-muted: #888888;
+    --border-color: #333333;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --frost-blue: #87ceeb;
+    --signal-green: #00ff88;
+    --error-red: #ff4444;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier Prime', monospace;
+    background: var(--background-dark);
+    color: var(--text-primary);
+    overflow: hidden;
+    cursor: none;
+}
+
+/* Screen Management */
+.screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--background-dark) 0%, var(--background-darker) 100%);
+    z-index: 1000;
+}
+
+.screen.hidden {
+    display: none;
+}
+
+/* Loading Screen */
+.loading-content {
+    text-align: center;
+    color: var(--primary-color);
+    animation: glitch 2s infinite;
+}
+
+.signal-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+}
+
+.loading-content h1 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    letter-spacing: 0.2rem;
+    text-shadow: 0 0 20px var(--primary-color);
+}
+
+.loading-bar {
+    width: 300px;
+    height: 4px;
+    background: var(--border-color);
+    margin: 2rem auto;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-progress {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    width: 0%;
+    animation: loadProgress 3s ease-out forwards;
+}
+
+.loading-text {
+    margin: 1rem 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.loading-dots span {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    margin: 0 4px;
+    animation: dotPulse 1.5s infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.5s; }
+.loading-dots span:nth-child(3) { animation-delay: 1s; }
+
+/* Main Menu */
+.menu-content {
+    text-align: center;
+    max-width: 600px;
+    padding: 2rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.title-section h1 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.3rem;
+    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 30px var(--primary-color);
+    animation: titleGlow 3s ease-in-out infinite alternate;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+.menu-options {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.menu-button {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    padding: 1rem 2rem;
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+    min-width: 200px;
+}
+
+.menu-button:hover {
+    background: var(--primary-color);
+    color: var(--background-dark);
+    box-shadow: 0 0 20px var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.distress-signal {
+    margin-top: 2rem;
+    padding: 1rem;
+    border: 1px solid var(--danger-color);
+    border-radius: 4px;
+    background: rgba(255, 0, 0, 0.1);
+}
+
+.signal-wave {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--danger-color), transparent);
+    margin-bottom: 0.5rem;
+    animation: signalWave 2s infinite;
+}
+
+.signal-text {
+    color: var(--danger-color);
+    font-size: 0.9rem;
+    font-weight: bold;
+    animation: textFlicker 2s infinite;
+}
+
+/* Game HUD */
+#game-hud {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 100;
+    font-family: 'Share Tech Mono', monospace;
+}
+
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.8), transparent);
+}
+
+.ammo-counter {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px var(--primary-color);
+}
+
+.health-bar {
+    width: 200px;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--danger-color), var(--signal-green));
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
+.battery-indicator {
+    color: var(--frost-blue);
+    text-shadow: 0 0 10px var(--frost-blue);
+}
+
+.hud-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.crosshair {
+    position: relative;
+    width: 20px;
+    height: 20px;
+}
+
+.crosshair-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 2px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+.crosshair-lines::before,
+.crosshair-lines::after {
+    content: '';
+    position: absolute;
+    background: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+.crosshair-lines::before {
+    width: 20px;
+    height: 1px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.crosshair-lines::after {
+    width: 1px;
+    height: 20px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.madness-meter {
+    position: absolute;
+    right: -250px;
+    top: 0;
+    width: 200px;
+    height: 8px;
+    background: var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    transform: rotate(-90deg);
+    transform-origin: left center;
+}
+
+.madness-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--secondary-color), var(--danger-color));
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.hud-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1rem 2rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+}
+
+.objective-text {
+    color: var(--signal-green);
+    font-size: 1.1rem;
+    text-shadow: 0 0 10px var(--signal-green);
+}
+
+.interaction-prompt {
+    position: absolute;
+    bottom: 3rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--accent-color);
+    font-size: 1rem;
+    animation: promptPulse 2s infinite;
+}
+
+/* Game Container */
+#game-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Cutscene Overlay */
+#cutscene-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cutscene-content {
+    max-width: 800px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.cutscene-text {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+}
+
+/* Animations */
+@keyframes glitch {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-2px); }
+    20% { transform: translateX(2px); }
+    30% { transform: translateX(-1px); }
+    40% { transform: translateX(1px); }
+    50% { transform: translateX(-2px); }
+    60% { transform: translateX(2px); }
+    70% { transform: translateX(-1px); }
+    80% { transform: translateX(1px); }
+    90% { transform: translateX(-1px); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+@keyframes loadProgress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+@keyframes dotPulse {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes titleGlow {
+    0% { text-shadow: 0 0 30px var(--primary-color); }
+    100% { text-shadow: 0 0 40px var(--primary-color), 0 0 50px var(--secondary-color); }
+}
+
+@keyframes signalWave {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes textFlicker {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes promptPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .title-section h1 {
+        font-size: 2.5rem;
+    }
+
+    .menu-content {
+        padding: 1rem;
+        max-width: 90vw;
+    }
+
+    .hud-top {
+        padding: 0.5rem 1rem;
+    }
+
+    .ammo-counter {
+        font-size: 1.2rem;
+    }
+
+    .battery-indicator {
+        font-size: 0.9rem;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print styles (hide game elements when printing) */
+@media print {
+    #game-container,
+    #game-hud {
+        display: none !important;
+    }
+}
