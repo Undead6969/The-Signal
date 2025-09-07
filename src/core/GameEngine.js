@@ -260,7 +260,7 @@ export class GameEngine {
 
     checkGameState() {
         // Check if player is dead
-        if (this.player.isDead()) {
+        if (this.player.isDead) {
             this.gameOver('death');
             return;
         }

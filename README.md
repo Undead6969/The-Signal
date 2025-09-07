@@ -27,6 +27,12 @@ You are a rescue soldier deployed to investigate a distress signal from Blacksta
 - HTTPS connection (required for Web Audio API)
 - At least 4GB RAM recommended
 
+### Features
+- ✅ **Procedural Textures**: No external assets needed - all textures generated in real-time
+- ✅ **Local Save System**: Progress saved to browser localStorage
+- ✅ **WebGL Optimized**: Runs entirely in browser with no installation
+- ✅ **3D Audio**: Spatial sound positioning for immersive horror experience
+
 ### Local Development
 
 1. **Clone the repository**

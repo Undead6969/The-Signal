@@ -1,3 +1,5 @@
+import * as THREE from 'three';
+
 export class StoryManager {
     constructor(gameEngine) {
         this.gameEngine = gameEngine;
@@ -189,8 +191,8 @@ export class StoryManager {
         // Setup story event listeners
         this.setupStoryEvents();
 
-        // Initialize first act
-        this.startAct(0);
+        // Don't auto-start the first act - wait for game to actually begin
+        // this.startAct(0);
 
         console.log('✅ Story Manager initialized');
     }

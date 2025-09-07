@@ -145,55 +145,243 @@ async function loadAssets() {
     ]);
 }
 
+// Procedural texture generation functions
+function createConcreteTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const context = canvas.getContext('2d');
+
+    // Base gray color
+    context.fillStyle = '#666666';
+    context.fillRect(0, 0, 256, 256);
+
+    // Add concrete texture pattern
+    context.fillStyle = '#555555';
+    for (let i = 0; i < 50; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 8 + 2;
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    // Add lighter spots
+    context.fillStyle = '#777777';
+    for (let i = 0; i < 30; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 4 + 1;
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createMetalTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const context = canvas.getContext('2d');
+
+    // Base metal color
+    context.fillStyle = '#888888';
+    context.fillRect(0, 0, 256, 256);
+
+    // Add metallic highlights
+    context.fillStyle = '#aaaaaa';
+    for (let i = 0; i < 20; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const width = Math.random() * 40 + 10;
+        const height = Math.random() * 4 + 2;
+        context.fillRect(x, y, width, height);
+    }
+
+    // Add darker areas
+    context.fillStyle = '#666666';
+    for (let i = 0; i < 15; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const width = Math.random() * 30 + 5;
+        const height = Math.random() * 3 + 1;
+        context.fillRect(x, y, width, height);
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createSnowTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const context = canvas.getContext('2d');
+
+    // Base snow color
+    context.fillStyle = '#f8f8ff';
+    context.fillRect(0, 0, 256, 256);
+
+    // Add snow texture
+    context.fillStyle = '#ffffff';
+    for (let i = 0; i < 200; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 3 + 1;
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    // Add subtle shadows
+    context.fillStyle = '#e8e8f8';
+    for (let i = 0; i < 50; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 8 + 3;
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createIceTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const context = canvas.getContext('2d');
+
+    // Base ice color
+    context.fillStyle = '#87ceeb';
+    context.fillRect(0, 0, 256, 256);
+
+    // Add ice crystals
+    context.strokeStyle = '#ffffff';
+    context.lineWidth = 1;
+    for (let i = 0; i < 30; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const length = Math.random() * 40 + 10;
+
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(x + length, y);
+        context.stroke();
+
+        // Add perpendicular lines for crystal effect
+        for (let j = 0; j < 3; j++) {
+            const offsetX = x + (length / 4) * j;
+            const offsetY = y + (Math.random() - 0.5) * 20;
+            context.beginPath();
+            context.moveTo(offsetX, offsetY - 10);
+            context.lineTo(offsetX, offsetY + 10);
+            context.stroke();
+        }
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createRustTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const context = canvas.getContext('2d');
+
+    // Base rust color
+    context.fillStyle = '#8b4513';
+    context.fillRect(0, 0, 256, 256);
+
+    // Add rust spots
+    context.fillStyle = '#a0522d';
+    for (let i = 0; i < 40; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 15 + 5;
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    // Add lighter rust areas
+    context.fillStyle = '#cd853f';
+    for (let i = 0; i < 25; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 8 + 3;
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function createBloodTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 256;
+    const context = canvas.getContext('2d');
+
+    // Base dark background
+    context.fillStyle = '#2a0000';
+    context.fillRect(0, 0, 256, 256);
+
+    // Add blood splatters
+    context.fillStyle = '#880000';
+    for (let i = 0; i < 30; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 20 + 5;
+
+        // Create irregular blood splatter shape
+        context.beginPath();
+        context.ellipse(x, y, size, size * 0.6, Math.random() * Math.PI, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    // Add brighter blood areas
+    context.fillStyle = '#aa0000';
+    for (let i = 0; i < 15; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const size = Math.random() * 10 + 3;
+        context.beginPath();
+        context.arc(x, y, size, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
+
 // Load texture assets
 async function loadTextures(loadingManager) {
-    const textureLoader = new THREE.TextureLoader(loadingManager);
+    console.log('🎨 Generating procedural textures...');
 
-    // Create placeholder textures for missing files
-    const createPlaceholderTexture = (color) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = canvas.height = 64;
-        const context = canvas.getContext('2d');
-        context.fillStyle = color;
-        context.fillRect(0, 0, 64, 64);
-        return new THREE.CanvasTexture(canvas);
-    };
-
-    // Environment textures with fallbacks
+    // Environment textures - generate procedural textures
     CONFIG.textures = {};
 
-    // Try to load textures, use placeholders if they fail
-    const texturePromises = [
-        { name: 'concrete', path: './assets/textures/concrete.jpg', fallback: '#666666' },
-        { name: 'metal', path: './assets/textures/metal.jpg', fallback: '#888888' },
-        { name: 'snow', path: './assets/textures/snow.jpg', fallback: '#ffffff' },
-        { name: 'ice', path: './assets/textures/ice.jpg', fallback: '#87ceeb' },
-        { name: 'rust', path: './assets/textures/rust.jpg', fallback: '#8b4513' },
-        { name: 'blood', path: './assets/textures/blood.jpg', fallback: '#880000' },
+    // Generate procedural textures instead of loading files
+    const proceduralTextures = [
+        { name: 'concrete', generator: () => createConcreteTexture() },
+        { name: 'metal', generator: () => createMetalTexture() },
+        { name: 'snow', generator: () => createSnowTexture() },
+        { name: 'ice', generator: () => createIceTexture() },
+        { name: 'rust', generator: () => createRustTexture() },
+        { name: 'blood', generator: () => createBloodTexture() },
     ];
 
-    texturePromises.forEach(({ name, path, fallback }) => {
-        try {
-            CONFIG.textures[name] = textureLoader.load(path, (texture) => {
-                texture.wrapS = THREE.RepeatWrapping;
-                texture.wrapT = THREE.RepeatWrapping;
-                texture.generateMipmaps = true;
-                console.log(`✅ Loaded texture: ${name}`);
-            }, undefined, (error) => {
-                console.warn(`⚠️ Failed to load texture: ${name}, using placeholder`);
-                CONFIG.textures[name] = createPlaceholderTexture(fallback);
-                CONFIG.textures[name].wrapS = THREE.RepeatWrapping;
-                CONFIG.textures[name].wrapT = THREE.RepeatWrapping;
-            });
-        } catch (error) {
-            console.warn(`⚠️ Error loading texture: ${name}, using placeholder`);
-            CONFIG.textures[name] = createPlaceholderTexture(fallback);
-            CONFIG.textures[name].wrapS = THREE.RepeatWrapping;
-            CONFIG.textures[name].wrapT = THREE.RepeatWrapping;
-        }
+    proceduralTextures.forEach(({ name, generator }) => {
+        CONFIG.textures[name] = generator();
+        CONFIG.textures[name].wrapS = THREE.RepeatWrapping;
+        CONFIG.textures[name].wrapT = THREE.RepeatWrapping;
+        console.log(`✅ Generated procedural texture: ${name}`);
     });
 
-    console.log('🎨 Texture loading setup complete');
+    console.log('🎨 Procedural texture generation complete');
+
+    // Signal completion to loading manager
+    if (loadingManager && loadingManager.onLoad) {
+        loadingManager.onLoad();
+    }
 }
 
 // Load 3D models
@@ -258,6 +446,7 @@ function setupEventListeners() {
 
     // Settings
     document.getElementById('save-settings').addEventListener('click', saveSettings);
+    document.getElementById('back-to-menu').addEventListener('click', returnToMainMenu);
 
     // Pause menu
     document.getElementById('resume-btn').addEventListener('click', resumeGame);
